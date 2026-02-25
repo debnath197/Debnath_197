@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>GIS Dashboard – India Lat/Lon Checker</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: linear-gradient(135deg, #e0f2ff, #f5fbff);
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+}
+
+/* ✅ UPDATED: GIS Dashboard Yellow Highlight */
+.logo-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #1e3a8a;
+    margin-bottom: 6px;
+    padding: 8px 14px;
+    background: #fef9c3;
+    border: 2px solid #facc15;
+    border-radius: 10px;
+    display: inline-block;
+}
+
+/* Subtitle same as before */
+.logo-subtitle {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 14px;
+}
+
+/* Sidebar box */
+.sidebar {
+    width: 320px;
+    background: #f8fbffdd;
+    backdrop-filter: blur(8px);
+    border-right: 1px solid #cbd5e1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+/* ✅ UPDATED: All Tool Sections Light Green */
+.section {
+    background: #ecfdf5 !important;
+    border: 1px solid #86efac !important;
+    border-radius: 14px;
+    padding: 14px 14px 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 3px 10px rgba(15,23,42,0.06);
+}
+
+.section h3 {
+    margin: 0 0 8px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 3px;
+    color: #475569;
+}
+
+/* Inputs */
+input[type="text"], input[type="file"], input[type="number"] {
+    width: 100%;
+    padding: 8px 9px;
+    border-radius: 9px;
+    border: 1px solid #d1d5db;
+    font-size: 13px;
+    margin-bottom: 9px;
+    background: #f9fafb;
+}
+
+/* Buttons */
+button {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 9px;
+    border: none;
+    background: #2563eb;
+    color: white;
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 4px;
+}
+button:hover { background: #1d4ed8; }
+
+/* MAIN */
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.topbar {
+    padding: 12px 20px;
+    background: #f8fbffdd;
+    border-bottom: 1px solid #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#map { flex: 1; }
+
+/* Table box */
+.table-box {
+    background: #f8fbffdd;
+    border-top: 1px solid #cbd5e1;
+    padding: 10px 16px 12px;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+table { width: 100%; border-collapse: collapse; font-size: 11px; }
+th, td { padding: 6px 8px; border-bottom: 1px solid #e5e7eb; }
+th {
+    background: #2563eb;
+    color: white;
+    position: sticky;
+    top: 0;
+}
+.point-icon { font-size: 22px; color: #ef4444; font-weight: bold; }
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+
+    <div class="logo-title">GIS Dashboard</div>
+    <div class="logo-subtitle">Lat/Lon validation • CSV • Shapefile overlay</div>
+
+    <!-- Coordinate Checker -->
+    <div class="section">
+        <h3>Coordinate Checker</h3>
+        <form method="post">
+            <input type="hidden" name="form_type" value="single">
+
+            <label>Latitude</label>
+            <input type="text" name="lat" value="{{ last_lat }}" placeholder="e.g. 23.5">
+
+            <label>Longitude</label>
+            <input type="text" name="lon" value="{{ last_lon }}" placeholder="e.g. 87.3">
+
+            <button type="submit">Validate Point</button>
+        </form>
+
+        {% if message %}
+        <div class="msg">{{ message }}</div>
+        {% endif %}
+    </div>
+
+    <!-- Buffer Tool -->
+    <div class="section">
+        <h3>Buffer Tool (1–100 km)</h3>
+
+        <label>Latitude</label>
+        <input type="text" id="buffer-lat" placeholder="e.g. 22.5726">
+
+        <label>Longitude</label>
+        <input type="text" id="buffer-lon" placeholder="e.g. 88.3639">
+
+        <label>Buffer Distance (km)</label>
+        <input type="number" id="buffer-radius" min="1" max="100" value="10">
+
+        <button type="button" id="draw-buffer-btn">Draw Buffer (Red)</button>
+        <button type="button" id="download-buffer-poi-btn">Download Buffer POI CSV</button>
+    </div>
+
+    <!-- Distance Tool -->
+    <div class="section">
+        <h3>Distance Measure</h3>
+        <button type="button" id="measure-btn">Start measuring distance</button>
+    </div>
+
+    <!-- Upload CSV -->
+    <div class="section">
+        <h3>Upload CSV (Lat, Lon)</h3>
+        <form method="post" enctype="multipart/form-data">
+            <input type="hidden" name="form_type" value="csv">
+
+            <label>CSV File</label>
+            <input type="file" name="csv_file" accept=".csv">
+            <button type="submit">Upload CSV</button>
+        </form>
+    </div>
+
+    <!-- Upload Shapefile -->
+    <div class="section">
+        <h3>Upload Shapefile (.zip)</h3>
+        <form method="post" enctype="multipart/form-data">
+            <input type="hidden" name="form_type" value="shapefile">
+
+            <label>ZIP File</label>
+            <input type="file" name="shapefile" accept=".zip">
+            <button type="submit">Upload Shapefile</button>
+        </form>
+    </div>
+
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+    <div class="topbar">
+        <div class="topbar-title">Interactive Map Viewer</div>
+        <div class="user-info">
+            Logged in as: {{ masked_phone }}
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <div class="table-box">
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Lat</th>
+                <th>Lon</th>
+                <th>Inside India?</th>
+                <th>Source</th>
+                <th>Time</th>
+            </tr>
+
+            {% for p in points %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ p.lat }}</td>
+                <td>{{ p.lon }}</td>
+                <td>{{ "Yes" if p.inside else "No" }}</td>
+                <td>{{ p.source }}</td>
+                <td>{{ p.created_at }}</td>
+            </tr>
+            {% endfor %}
+
+        </table>
+    </div>
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+/* MAP INITIALIZATION */
+const map = L.map('map').setView([22, 80], 5);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+/* CSV + Manual point display */
+const pointIcon = L.divIcon({
+    html: '<div class="point-icon">◉</div>',
+    iconSize: [30, 30],
+    iconAnchor: [15, 15]
+});
+
+const points = {{ points_json|safe }};
+points.forEach((p, index) => {
+    if (p.lat && p.lon) {
+        L.marker([p.lat, p.lon], p.source === "csv" ? {icon: pointIcon} : {})
+            .addTo(map);
+    }
+});
+</script>
+
+</body>
+</html>
