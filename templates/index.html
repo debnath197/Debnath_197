@@ -1,0 +1,694 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>GIS Dashboard – India Lat/Lon Checker</title>
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+    <style>
+        * { box-sizing: border-box; }
+
+        /* 🔹 map ঠিকঠাক দেখানোর জন্য height সেট */
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #e0f2ff, #f5fbff);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 320px;
+            background: #f8fbffdd;
+            backdrop-filter: blur(8px);
+            border-right: 1px solid #cbd5e1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        /* GIS Dashboard টাইটেল – Yellow highlight */
+        .logo-title {
+            font-size: 30px;
+            font-weight: 700;
+            color: #1d4ed8;
+            margin-bottom: 4px;
+            padding: 10px 12px;
+            border: 2px solid #ca8a04;
+            background: #fde047;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .logo-subtitle {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 16px;
+        }
+
+       /* 🔰 সব টুল box – হালকা সবুজ + AI Green Text */
+.section {
+    background: #E40078;              /* হালকা সবুজ ব্যাকগ্রাউন্ড */
+    border: 1px solid #22c55e;        /* সবুজ বর্ডার */
+    border-radius: 14px;
+    padding: 14px 14px 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06);
+    color: #E40078;                   /* AI ডার্ক গ্রিন টেক্সট */
+}
+
+
+        .section h3 {
+            margin: 0 0 8px 0;
+            font-size: 15px;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 3px;
+            color: #5027F5;
+        }
+
+        input[type="text"],
+        input[type="file"],
+        input[type="number"] {
+            width: 100%;
+            padding: 8px 9px;
+            border-radius: 9px;
+            border: 1px solid #d1d5db;
+            font-size: 13px;
+            margin-bottom: 9px;
+            background: #f9fafb;
+        }
+
+        input[type="text"]:focus,
+        input[type="file"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 9px 12px;
+            border-radius: 9px;
+            border: none;
+            background: #2563eb;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            margin-top: 4px;
+        }
+
+        button:hover { background: #1d4ed8; }
+        button:active { transform: scale(0.98); }
+
+        .msg {
+            margin-top: 8px;
+            font-size: 12px;
+            padding: 8px 9px;
+            border-radius: 8px;
+            background: #e0ecff;
+            color: #1d4ed8;
+            border-left: 3px solid #2563eb;
+        }
+
+        .little-help {
+            font-size: 11px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .download-links a {
+            display: block;
+            font-size: 13px;
+            color: #2563eb;
+            text-decoration: none;
+            margin-top: 6px;
+        }
+
+        .download-links a:hover { text-decoration: underline; }
+
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* header bar – #00008B dark blue */
+        .topbar {
+            padding: 12px 20px;
+            background: #00008B;
+            border-bottom: 1px solid #020617;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .topbar-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #e5e7eb;
+        }
+
+        .topbar-sub {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        /* Logged in + Logout highlight */
+        .user-info {
+            font-size: 15px;
+            color: #950606;
+            font-weight: 900;
+            border: 2px solid #950606;
+            padding: 6px 10px;
+            background: #ffe5e5;
+            border-radius: 6px;
+        }
+
+        .user-info a {
+            color: #950606;
+            font-weight: 900;
+            margin-left: 10px;
+            font-size: 15px;
+            text-decoration: none;
+        }
+
+        .user-info a:hover {
+            text-decoration: underline;
+        }
+
+        /* 🔹 map container – full height */
+        #map {
+            flex: 1;
+            height: 100%;
+            min-height: 300px;
+        }
+
+        .table-box {
+            background: #f8fbffdd;
+            border-top: 1px solid #cbd5e1;
+            padding: 10px 16px 12px;
+            max-height: 260px;
+            overflow-y: auto;
+        }
+
+        .table-header-row {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .table-header-row h3 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .table-count {
+            font-size: 11px;
+            color: #6b7280;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+
+        th, td {
+            padding: 6px 8px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            background: #2563eb;
+            color: #f9fafb;
+            position: sticky;
+            top: 0;
+        }
+
+        .point-icon {
+            font-size: 22px;
+            color: #ef4444;
+            font-weight: bold;
+        }
+
+        @media (max-width: 900px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #cbd5e1;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="logo-title">GIS Dashboard</div>
+    <div class="logo-subtitle"></div>
+
+    <div class="section">
+        <h3>Coordinate Checker</h3>
+        <form method="post">
+            <input type="hidden" name="form_type" value="single">
+
+            <label>Latitude</label>
+            <input type="text" name="lat" value="{{ last_lat }}" placeholder="">
+
+            <label>Longitude</label>
+            <input type="text" name="lon" value="{{ last_lon }}" placeholder="">
+
+            <button type="submit">Validate Point</button>
+        </form>
+
+        {% if message %}
+        <div class="msg">{{ message }}</div>
+        {% endif %}
+    </div>
+
+    <!-- 🔴 Buffer Tool -->
+    <div class="section">
+        <h3>Buffer Tool (1–100 km)</h3>
+
+        <label>Latitude</label>
+        <input type="text" id="buffer-lat" placeholder="">
+
+        <label>Longitude</label>
+        <input type="text" id="buffer-lon" placeholder="">
+
+        <label>Buffer Distance (km)</label>
+        <input type="number" id="buffer-radius" min="1" max="100" value="10">
+
+        <button type="button" id="draw-buffer-btn">Draw Buffer (Red)</button>
+        <button type="button" id="download-buffer-poi-btn">Download Buffer POI CSV</button>
+
+        <div class="little-help">
+            (1–100 km).<br>
+            <br>
+        </div>
+    </div>
+
+    <!-- 🟢 Distance Measure Tool -->
+    <div class="section">
+        <h3>Distance Measure</h3>
+
+        <button type="button" id="measure-btn">Start measuring distance</button>
+
+        <div class="little-help" id="measure-info">
+            <br>
+            Distance will be shown in meters and kilometers.
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>Upload CSV (Lat, Lon)</h3>
+        <form method="post" enctype="multipart/form-data">
+            <input type="hidden" name="form_type" value="csv">
+
+            <label>CSV File</label>
+            <input type="file" name="csv_file" accept=".csv">
+
+            <button type="submit">Upload CSV</button>
+        </form>
+        <div class="little-help">
+
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>Upload Shapefile (.zip)</h3>
+        <form method="post" enctype="multipart/form-data">
+            <input type="hidden" name="form_type" value="shapefile">
+
+            <label>ZIP File</label>
+            <input type="file" name="shapefile" accept=".zip">
+
+            <button type="submit">Upload Shapefile</button>
+        </form>
+        <div class="little-help">
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>Export Data</h3>
+        <div class="download-links">
+            <a href="/download_all_csv">⬇ Download ALL points (inside + outside)</a>
+            <a href="/download_wrong_csv">⬇ Download ONLY outside India points</a>
+        </div>
+    </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+    <div class="topbar">
+        <div>
+            <div class="topbar-title">GIS MAP</div>
+            <div class="topbar-sub">
+            </div>
+        </div>
+        <div class="user-info">
+            Logged in as: {{ masked_phone }}
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <div class="table-box">
+        <div class="table-header-row">
+            <h3>All Points</h3>
+            <span class="table-count">
+                Total: {{ points|length }} • Outside India: {{ outside_points|length }}
+            </span>
+        </div>
+
+        <table>
+            <tr>
+                <th>#</th>
+                <th>Lat</th>
+                <th>Lon</th>
+                <th>Inside India?</th>
+                <th>Source</th>
+                <th>Time</th>
+            </tr>
+            {% for p in points %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ p.lat }}</td>
+                <td>{{ p.lon }}</td>
+                <td>{{ "Yes" if p.inside else "No" }}</td>
+                <td>{{ p.source }}</td>
+                <td>{{ p.created_at }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const map = L.map('map').setView([22, 80], 5);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const pointIcon = L.divIcon({
+        html: '<div class="point-icon">◉</div>',
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
+    });
+
+    const points = {{ points_json|safe }};
+    points.forEach((p, index) => {
+        if (p.lat === null || p.lon === null) return;
+
+        const lat = parseFloat(p.lat);
+        const lon = parseFloat(p.lon);
+        if (isNaN(lat) || isNaN(lon)) return;
+
+        const opts = (p.source === "csv") ? { icon: pointIcon } : {};
+
+        L.marker([lat, lon], opts).addTo(map)
+            .bindPopup(
+                `<b>Point #${index + 1}</b><br>
+                 Lat: ${p.lat}<br>
+                 Lon: ${p.lon}<br>
+                 Inside India: ${p.inside ? "Yes" : "No"}<br>
+                 Source: ${p.source}<br>
+                 Time: ${p.created_at}`
+            );
+    });
+
+    const shpData = {{ shapefile_json|safe }};
+    if (shpData && shpData.type) {
+        const layer = L.geoJSON(shpData, {
+            style: {
+                color: "#16a34a",
+                weight: 2,
+                fillOpacity: 0.08
+            }
+        }).addTo(map);
+        try {
+            map.fitBounds(layer.getBounds());
+        } catch (e) {
+            console.log("fitBounds error:", e);
+        }
+    }
+
+    // ===================== DISTANCE MEASURE TOOL (STATE) =====================
+
+    let measureActive = false;
+    let measurePoints = [];
+    let measureLayerGroup = L.layerGroup().addTo(map);
+
+    const measureBtn = document.getElementById('measure-btn');
+    const measureInfo = document.getElementById('measure-info');
+
+    function clearMeasure() {
+        measurePoints = [];
+        measureLayerGroup.clearLayers();
+    }
+
+    function formatDistance(meters) {
+        const km = meters / 1000;
+        return {
+            meters: meters.toFixed(0),
+            km: km.toFixed(3)
+        };
+    }
+
+    function handleMeasureClick(latlng) {
+        measurePoints.push(latlng);
+
+        L.circleMarker(latlng, {
+            radius: 5,
+            color: "#f97316",
+            fillColor: "#fed7aa",
+            fillOpacity: 0.9,
+            weight: 2
+        }).addTo(measureLayerGroup);
+
+        if (measurePoints.length === 2) {
+            const p1 = measurePoints[0];
+            const p2 = measurePoints[1];
+
+            const dMeters = map.distance(p1, p2);
+            const d = formatDistance(dMeters);
+
+            L.polyline([p1, p2], {
+                color: "#f97316",
+                weight: 3,
+                dashArray: "6 4"
+            }).addTo(measureLayerGroup);
+
+            L.popup()
+                .setLatLng(p2)
+                .setContent(
+                    `<b>Distance</b><br>
+                     ${d.meters} m<br>
+                     ${d.km} km`
+                )
+                .openOn(map);
+
+            if (measureInfo) {
+                measureInfo.innerHTML =
+                    `Distance: <b>${d.meters} m</b> (≈ <b>${d.km} km</b>)<br>` +
+                    `<span style="font-size:11px; color:#6b7280;">Click "Start measuring distance" to reset.</span>`;
+            }
+
+            measureActive = false;
+            if (measureBtn) {
+                measureBtn.textContent = "Start measuring distance again";
+            }
+        }
+    }
+
+    if (measureBtn) {
+        measureBtn.addEventListener('click', function () {
+            if (!measureActive) {
+                measureActive = true;
+                clearMeasure();
+                measureBtn.textContent = "Click 2 points on map";
+                if (measureInfo) {
+                    measureInfo.innerHTML = "Now click first and second point on the map to measure distance.";
+                }
+            } else {
+                measureActive = false;
+                clearMeasure();
+                measureBtn.textContent = "Start measuring distance";
+                if (measureInfo) {
+                    measureInfo.innerHTML =
+                        "Click “Start measuring distance”, then click any two points on the map.<br>" +
+                        "Distance will be shown in meters and kilometers.";
+                }
+            }
+        });
+    }
+
+    // ===================== MAP CLICK => WEATHER POPUP + MEASURE =====================
+
+    let clickMarker = null;
+
+    map.on('click', function (e) {
+        const lat = e.latlng.lat.toFixed(5);
+        const lon = e.latlng.lng.toFixed(5);
+
+        if (measureActive) {
+            handleMeasureClick(e.latlng);
+            return;
+        }
+
+        if (clickMarker) {
+            map.removeLayer(clickMarker);
+        }
+
+        clickMarker = L.marker(e.latlng).addTo(map);
+        clickMarker.bindPopup(
+            `<b>Lat:</b> ${lat}<br>
+             <b>Lon:</b> ${lon}<br>
+             <i>Loading weather...</i>`
+        ).openPopup();
+
+        fetch(`/api/weather?lat=${lat}&lon=${lon}`)
+            .then(resp => resp.json())
+            .then(data => {
+                if (data.error) {
+                    console.error("Weather error:", data);
+                    let extra = "";
+                    if (data.status_code) {
+                        extra = `<br><small>Status: ${data.status_code}</small>`;
+                    }
+                    clickMarker.setPopupContent(
+                        `<b>Lat:</b> ${lat}<br>
+                         <b>Lon:</b> ${lon}<br>
+                         <span style="color:#b91c1c">${data.error}</span>${extra}`
+                    );
+                    return;
+                }
+
+                const humLine = (data.humidity !== null && data.humidity !== undefined)
+                    ? `<br><b>Humidity:</b> ${data.humidity}%`
+                    : "";
+
+                clickMarker.setPopupContent(
+                    `<b>Lat:</b> ${lat}<br>
+                     <b>Lon:</b> ${lon}<br>
+                     <b>Weather:</b> ${data.description}<br>
+                     <b>Temp:</b> ${data.temp_c} °C${humLine}<br>
+                     <b>Wind:</b> ${data.wind_speed} km/h`
+                );
+            })
+            .catch(err => {
+                console.error("Fetch error:", err);
+                clickMarker.setPopupContent(
+                    `<b>Lat:</b> ${lat}<br>
+                     <b>Lon:</b> ${lon}<br>
+                     <span style="color:#b91c1c">Weather load failed.</span>`
+                );
+            });
+    });
+
+    // ===================== BUFFER TOOL (RED CIRCLE) =====================
+
+    let bufferLayer = null;
+
+    function validateBufferInputs() {
+        const latStr = document.getElementById('buffer-lat').value.trim();
+        const lonStr = document.getElementById('buffer-lon').value.trim();
+        const radiusStr = document.getElementById('buffer-radius').value.trim();
+
+        if (!latStr || !lonStr || !radiusStr) {
+            alert("Please enter latitude, longitude and buffer distance.");
+            return null;
+        }
+
+        const lat = parseFloat(latStr);
+        const lon = parseFloat(lonStr);
+        const radiusKm = parseFloat(radiusStr);
+
+        if (isNaN(lat) || isNaN(lon)) {
+            alert("Latitude and Longitude must be numeric.");
+            return null;
+        }
+
+        if (isNaN(radiusKm)) {
+            alert("Buffer distance must be numeric.");
+            return null;
+        }
+
+        if (radiusKm < 1 || radiusKm > 100) {
+            alert("Buffer distance must be between 1 and 100 km.");
+            return null;
+        }
+
+        return { lat, lon, radiusKm };
+    }
+
+    function drawBufferCircle() {
+        const vals = validateBufferInputs();
+        if (!vals) return;
+
+        const { lat, lon, radiusKm } = vals;
+        const radiusMeters = radiusKm * 1000;
+
+        if (bufferLayer) {
+            map.removeLayer(bufferLayer);
+        }
+
+        bufferLayer = L.circle([lat, lon], {
+            radius: radiusMeters,
+            color: "#ef4444",
+            fillColor: "#ef4444",
+            fillOpacity: 0.2,
+            weight: 2
+        }).addTo(map);
+
+        try {
+            map.fitBounds(bufferLayer.getBounds(), { padding: [20, 20] });
+        } catch (e) {
+            map.setView([lat, lon], 10);
+        }
+    }
+
+    document.getElementById('draw-buffer-btn').addEventListener('click', drawBufferCircle);
+
+    // ===================== BUFFER POI CSV DOWNLOAD =====================
+
+    document.getElementById('download-buffer-poi-btn').addEventListener('click', function () {
+        const vals = validateBufferInputs();
+        if (!vals) return;
+
+        const { lat, lon, radiusKm } = vals;
+        const url = `/download_buffer_pois?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&radius_km=${encodeURIComponent(radiusKm)}`;
+        window.location.href = url;
+    });
+</script>
+</body>
+</html>
