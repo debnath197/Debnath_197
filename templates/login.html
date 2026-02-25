@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>GeoPortal Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #56A081;
+      --primary: #1abc9c;
+      --primary-soft: rgba(26, 188, 156, 0.15);
+      --accent: #4fc3f7;
+      --text: #f5f7fb;
+      --muted: #9ca3af;
+      --error: #f97373;
+      --card-bg: rgba(15, 23, 42, 0.92);
+      --border-soft: rgba(255, 255, 255, 0.08);
+      --radius-xl: 24px;
+      --shadow-soft: 0 24px 60px rgba(0, 0, 0, 0.55);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at top, #1f2937 0, #020617 45%, #000 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow: hidden;
+    }
+
+    .bg-map {
+      position: fixed;
+      inset: -40%;
+      background:
+        radial-gradient(circle at 10% 20%, rgba(79, 192, 255, 0.14), transparent 55%),
+        radial-gradient(circle at 80% 0%, rgba(34, 197, 94, 0.12), transparent 50%),
+        radial-gradient(circle at 90% 80%, rgba(129, 140, 248, 0.12), transparent 50%);
+      opacity: 0.9;
+      pointer-events: none;
+      z-index: -2;
+    }
+
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+      background-size: 40px 40px;
+      mask-image: radial-gradient(circle at center, black 0, transparent 72%);
+      opacity: 0.7;
+      z-index: -1;
+    }
+
+    .login-wrapper {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr);
+      gap: 40px;
+      max-width: 1080px;
+      width: 100%;
+      align-items: center;
+    }
+
+    @media (max-width: 900px) {
+      .login-wrapper {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 28px;
+      }
+    }
+
+    .hero-panel {
+      position: relative;
+      padding: 24px 0;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px 4px 4px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      margin-bottom: 18px;
+    }
+
+    .badge-ping {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      border: 2px solid rgba(56, 189, 248, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: visible;
+    }
+
+    .badge-ping::before {
+      content: "";
+      position: absolute;
+      inset: -6px;
+      border-radius: inherit;
+      border: 2px solid rgba(56, 189, 248, 0.3);
+      opacity: 0.7;
+      animation: ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 999px;
+    }
+
+    @keyframes ping {
+      0% { transform: scale(0.7); opacity: 0.6; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+
+    .badge-text {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .hero-title {
+      font-size: clamp(26px, 3vw, 32px);
+      font-weight: 600;
+      line-height: 1.2;
+      margin-bottom: 10px;
+    }
+
+    .hero-title span {
+      background: linear-gradient(to right, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 14px;
+      color: var(--muted);
+      max-width: 360px;
+      line-height: 1.5;
+      margin-bottom: 22px;
+    }
+
+    .hero-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 26px;
+    }
+
+    .hero-pill {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+    }
+
+    .hero-map-card {
+      position: relative;
+      margin-top: 10px;
+      padding: 14px;
+      border-radius: 20px;
+      background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.25), transparent 55%),
+                  radial-gradient(circle at bottom, rgba(16, 185, 129, 0.25), transparent 55%),
+                  rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+    }
+
+    .hero-map-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .hero-map-title {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hero-map-title-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.35);
+    }
+
+    .hero-map-toolbar {
+      display: flex;
+      gap: 6px;
+    }
+
+    .toolbar-btn {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: rgba(15, 23, 42, 0.5);
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: default;
+    }
+
+    /* 🔴 hero-map নতুন স্টাইল: শুধু container + overflow hidden */
+    .hero-map {
+      position: relative;
+      height: 180px;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: #020617;
+    }
+
+    /* 🔴 iframe পুরো box ভরবে */
+    .hero-map iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+    }
+
+    .hero-map-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    .hero-map-footer strong {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .card {
+      position: relative;
+      border-radius: var(--radius-xl);
+      background: var(--card-bg);
+      border: 1px solid var(--border-soft);
+      box-shadow: var(--shadow-soft);
+      padding: 26px 26px 24px;
+      max-width: 420px;
+      width: 100%;
+      backdrop-filter: blur(24px);
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      border: 1px solid transparent;
+      background: linear-gradient(120deg, rgba(56, 189, 248, 0.3), rgba(16, 185, 129, 0.2), transparent);
+      mask-image: linear-gradient(180deg, black, transparent 40%);
+      opacity: 0.75;
+      pointer-events: none;
+    }
+
+    .card-header {
+      position: relative;
+      margin-bottom: 18px;
+    }
+
+    .card-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: radial-gradient(circle at 30% 20%, var(--accent), var(--primary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+      box-shadow: 0 0 18px rgba(96, 165, 250, 0.7);
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .card-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .card-subtitle {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .form {
+      position: relative;
+      margin-top: 12px;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .field-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      font-size: 12px;
+    }
+
+    .field-label {
+      color: #e5e7eb;
+      font-weight: 500;
+    }
+
+    .field-helper {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .field-input-wrap {
+      position: relative;
+    }
+
+    .field-icon {
+      position: absolute;
+      inset: 0 auto 0 10px;
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    .field-input {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      background: rgba(15, 23, 42, 0.9);
+      padding: 10px 12px 10px 32px;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    .field-input::placeholder {
+      color: rgba(148, 163, 184, 0.7);
+    }
+
+    .field-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.7);
+      background: rgba(15, 23, 42, 1);
+    }
+
+    .field-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      margin-bottom: 14px;
+    }
+
+    .checkbox-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .checkbox-wrap input {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .checkbox-wrap span {
+      color: var(--muted);
+    }
+
+    .link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 12px;
+    }
+
+    .link:hover {
+      text-decoration: underline;
+    }
+
+    .btn-primary {
+      width: 100%;
+      border-radius: 999px;
+      border: none;
+      outline: none;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #020617;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      cursor: pointer;
+      margin-bottom: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 14px 40px rgba(34, 197, 94, 0.35);
+      transform: translateY(0);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 50px rgba(59, 130, 246, 0.45);
+      filter: brightness(1.03);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.9);
+      filter: brightness(0.96);
+    }
+
+    .btn-spinner {
+      display: none;
+      border-radius: 999px;
+      border: 2px solid rgba(15, 23, 42, 0.4);
+      border-top-color: #020617;
+      width: 14px;
+      height: 14px;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .btn-text-loading { display: none; }
+
+    .card-footer {
+      margin-top: 6px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      position: relative;
+    }
+
+    .card-footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .card-footer a:hover {
+      text-decoration: underline;
+    }
+
+    .meta-info {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      opacity: 0.8;
+    }
+
+    .meta-pill {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+    }
+
+    .meta-pill span {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .global-error {
+      margin-bottom: 10px;
+      font-size: 12px;
+      color: var(--error);
+      background: rgba(248, 113, 113, 0.12);
+      border-radius: 10px;
+      padding: 6px 10px;
+      border: 1px solid rgba(248, 113, 113, 0.6);
+    }
+
+    .info-msg {
+      margin-bottom: 10px;
+      font-size: 12px;
+      color: #22c55e;
+      background: rgba(34, 197, 94, 0.12);
+      border-radius: 10px;
+      padding: 6px 10px;
+      border: 1px solid rgba(34, 197, 94, 0.6);
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-map"></div>
+  <div class="bg-grid"></div>
+
+  <div class="login-wrapper">
+
+    <!-- LEFT SIDE (hero panel) -->
+    <section class="hero-panel">
+      <div class="badge">
+        <div class="badge-ping">
+          <div class="badge-dot"></div>
+        </div>
+        <span class="badge-text">Live • Geo Location</span>
+      </div>
+
+      <h1 class="hero-title">
+        GIS<span></span> Access
+      </h1>
+      <p class="hero-subtitle"></p>
+
+      <div class="hero-stats">
+        <div class="hero-pill"># Realtime map tiles</div>
+        <div class="hero-pill"># Indoor & outdoor GIS</div>
+        <div class="hero-pill"># Role-based access</div>
+      </div>
+
+      <div class="hero-map-card">
+        <div class="hero-map-header">
+          <div class="hero-map-title">
+            <span class="hero-map-title-dot"></span>
+            <span>Operational Layers</span>
+          </div>
+          <div class="hero-map-toolbar">
+            <div class="toolbar-btn">+</div>
+            <div class="toolbar-btn">−</div>
+            <div class="toolbar-btn">☰</div>
+          </div>
+        </div>
+
+        <div class="hero-map">
+  <iframe
+    src="https://www.google.com/maps?q=India&t=k&z=4&output=embed"
+    loading="lazy"
+    referrerpolicy="no-referrer-when-downgrade"
+    allowfullscreen>
+  </iframe>
+</div>
+
+
+        <div class="hero-map-footer">
+          <div> <strong></strong></div>
+          <div> <strong></strong></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT SIDE: LOGIN FORM -->
+    <section class="card">
+      <div class="card-header">
+        <div class="card-logo">🌐</div>
+        <div class="card-title">WELCOME TO GIS ACCESS</div>
+        <div class="card-subtitle"></div>
+      </div>
+
+      {% if error %}
+      <div class="global-error">
+        {{ error }}
+      </div>
+      {% endif %}
+
+      {% if info %}
+      <div class="info-msg">
+        {{ info }}
+      </div>
+      {% endif %}
+
+      <form class="form" method="post" id="loginForm">
+        {% if otp_sent %}
+          <input type="hidden" name="step" value="verify_otp">
+        {% else %}
+          <input type="hidden" name="step" value="send_otp">
+        {% endif %}
+
+        <!-- Email -->
+        <div class="field">
+          <div class="field-label-row">
+            <label for="email" class="field-label"></label>
+            <span class="field-helper"></span>
+          </div>
+          <div class="field-input-wrap">
+            <span class="field-icon">📧</span>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              placeholder=""
+              class="field-input"
+              value="{{ email }}"
+              {% if otp_sent %}readonly{% endif %}
+              required
+            />
+          </div>
+        </div>
+
+        {% if otp_sent %}
+        <!-- OTP FIELD -->
+        <div class="field">
+          <div class="field-label-row">
+            <label for="otp" class="field-label">OTP</label>
+            <span class="field-helper">Check your email inbox</span>
+          </div>
+          <div class="field-input-wrap">
+            <span class="field-icon">🔑</span>
+            <input
+              id="otp"
+              name="otp"
+              type="text"
+              placeholder="Enter 6-digit OTP"
+              class="field-input"
+              required
+            />
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="field-row">
+          <label class="checkbox-wrap">
+            <input type="checkbox" id="remember" />
+            <span>Remember this device</span>
+          </label>
+          <a href="{{ url_for('forgot_password') }}" class="link">Forgot password?</a>
+        </div>
+
+        <button class="btn-primary" type="submit" id="loginBtn">
+          {% if otp_sent %}
+            <span class="btn-text-default">Verify & Login</span>
+          {% else %}
+            <span class="btn-text-default">Send OTP</span>
+          {% endif %}
+          <span class="btn-text-loading">Signing in...</span>
+          <span class="btn-spinner"></span>
+        </button>
+      </form>
+
+      <div class="card-footer">
+        Not registered?
+        <a href="{{ url_for('signup') }}">Signup Account</a>
+      </div>
+
+      <div class="meta-info">
+        <div class="meta-pill">
+          <span>GIS</span>
+          <span>•</span>
+          <span>GIS / SHP / DATA</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const loginForm = document.getElementById("loginForm");
+    const loginBtn = document.getElementById("loginBtn");
+    const textDefault = loginBtn.querySelector(".btn-text-default");
+    const textLoading = loginBtn.querySelector(".btn-text-loading");
+    const spinner = loginBtn.querySelector(".btn-spinner");
+
+    loginForm.addEventListener("submit", function () {
+      loginBtn.disabled = true;
+      textDefault.style.display = "none";
+      textLoading.style.display = "inline-flex";
+      spinner.style.display = "inline-flex";
+    });
+  </script>
+</body>
+</html>
