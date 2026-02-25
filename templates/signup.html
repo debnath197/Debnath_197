@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>GeoPortal Sign Up</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at top, #1f2937 0, #020617 45%, #000 100%);
+      color: #f5f7fb;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      max-width: 440px;
+      width: 100%;
+      background: rgba(15, 23, 42, 0.95);
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+      padding: 26px 26px 22px;
+      position: relative;
+    }
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(120deg, rgba(56, 189, 248, 0.3), rgba(16, 185, 129, 0.2), transparent);
+      mask-image: linear-gradient(180deg, black, transparent 40%);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    .card-header {
+      position: relative;
+      margin-bottom: 18px;
+    }
+    .card-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: radial-gradient(circle at 30% 20%, #4fc3f7, #1abc9c);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+      box-shadow: 0 0 18px rgba(96, 165, 250, 0.7);
+      font-weight: 700;
+      font-size: 18px;
+    }
+    .card-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .card-subtitle {
+      font-size: 13px;
+      color: #9ca3af;
+    }
+    .field {
+      margin-bottom: 12px;
+      position: relative;
+    }
+    .field-label {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 6px;
+      color: #e5e7eb;
+      font-weight: 500;
+    }
+    .field-input {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      background: rgba(15, 23, 42, 0.9);
+      padding: 10px 12px;
+      font-size: 13px;
+      color: #f5f7fb;
+      outline: none;
+    }
+    .field-input::placeholder {
+      color: rgba(148, 163, 184, 0.7);
+    }
+    .field-input:focus {
+      border-color: #4fc3f7;
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.7);
+      background: rgba(15, 23, 42, 1);
+    }
+    .global-error {
+      font-size: 12px;
+      color: #f97373;
+      background: rgba(248, 113, 113, 0.12);
+      border-radius: 10px;
+      padding: 6px 10px;
+      border: 1px solid rgba(248, 113, 113, 0.6);
+      margin-bottom: 10px;
+    }
+    .hint {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+    .btn-primary {
+      width: 100%;
+      border-radius: 999px;
+      border: none;
+      outline: none;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #020617;
+      background: linear-gradient(135deg, #1abc9c, #4fc3f7);
+      cursor: pointer;
+      margin-top: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 14px 40px rgba(34, 197, 94, 0.35);
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 50px rgba(59, 130, 246, 0.45);
+    }
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.9);
+    }
+    .card-footer {
+      text-align: center;
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 10px;
+      position: relative;
+    }
+    .card-footer a {
+      color: #4fc3f7;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .card-footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-logo">🛰</div>
+      <div class="card-title">Request GeoPortal access</div>
+      <div class="card-subtitle">
+      </div>
+    </div>
+
+    {% if error %}
+    <div class="global-error">
+      {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="post">
+      <!-- Phone -->
+      <div class="field">
+        <label class="field-label" for="phone">Phone (10 digits)</label>
+        <input
+          id="phone"
+          name="phone"
+          class="field-input"
+          type="text"
+          placeholder=" "
+          value="{{ phone }}"
+          required
+        />
+      </div>
+
+      <!-- Email -->
+      <div class="field">
+        <label class="field-label" for="email">Official Email (@gmail.com)</label>
+        <input
+          id="email"
+          name="email"
+          class="field-input"
+          type="email"
+          placeholder="example@gmail.com"
+          value="{{ email }}"
+          required
+        />
+      </div>
+
+      <!-- Password -->
+      <div class="field">
+        <label class="field-label" for="password">Password</label>
+        <input
+          id="password"
+          name="password"
+          class="field-input"
+          type="password"
+          placeholder="10 chars: Aa0..."
+          required
+        />
+        <div class="hint">
+          Password must be exactly 10 characters and include:<br>
+          • at least 1 uppercase (A–Z)<br>
+          • at least 1 lowercase (a–z)<br>
+          • at least 1 number (0–9)
+        </div>
+      </div>
+
+      <button class="btn-primary" type="submit">Submit access request</button>
+    </form>
+
+    <div class="card-footer">
+      Already registered?
+      <a href="{{ url_for('login') }}">Back to login</a>
+    </div>
+  </div>
+</body>
+</html>
