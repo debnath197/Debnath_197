@@ -131,7 +131,7 @@ shapefile_geojson = None
 # ===== INDIA ADMIN BOUNDARY LOAD =====
 india_gdf = gpd.read_file(
     os.path.join(os.path.dirname(__file__),
-                 "india_India_Country_Boundary.shp")
+                 "india_boundary.zip")
 )
 
 # CRS fix
@@ -792,3 +792,4 @@ def download_buffer_pois():
 if __name__ == "__main__":
     # pip install flask geopandas requests
     app.run(debug=True)
+
