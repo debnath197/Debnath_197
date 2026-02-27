@@ -122,6 +122,8 @@ def get_user_by_email(email: str):
 
 # সব পয়েন্ট (inside + outside, manual + csv)
 points = []
+csv_headers = []
+csv_rows = []
 
 # shapefile থেকে আসা GeoJSON data (global)
 shapefile_geojson = None
@@ -129,7 +131,7 @@ shapefile_geojson = None
 # ===== INDIA ADMIN BOUNDARY LOAD =====
 india_gdf = gpd.read_file(
     os.path.join(os.path.dirname(__file__),
-                 "india_boundary.zip")
+                 "india_India_Country_Boundary.shp")
 )
 
 # CRS fix
@@ -425,7 +427,12 @@ def index():
             else:
                 try:
                     decoded = file.read().decode("utf-8")
-                    rdr = csv.reader(io.StringIO(decoded))
+                    rdr = csv.DictReader(io.StringIO(decoded))
+
+                    csv_headers.clear()
+                    csv_rows.clear()
+
+                    csv_headers.extend(rdr.fieldnames)
 
                     total = 0
                     added = 0
@@ -433,17 +440,13 @@ def index():
 
                     for row in rdr:
 
-                        # empty row skip
-                        if not row:
-                            continue
-
                         try:
-                            cleaned = [c.strip() for c in row if c.strip() != ""]
+                            cleaned_vals = [v for v in row.values() if v not in ("", None)]
 
                             nums = []
-                            for c in cleaned:
+                            for v in cleaned_vals:
                                 try:
-                                    nums.append(float(c))
+                                    nums.append(float(v))
                                 except:
                                     pass
 
@@ -464,8 +467,11 @@ def index():
                             "lon": lon,
                             "source": "csv",
                             "inside": inside,
-                            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                            "row_index": len(csv_rows)
                         })
+
+                        csv_rows.append(row)
 
                         added += 1
                         if not inside:
@@ -565,19 +571,25 @@ def download_wrong_csv():
     if "user_phone" not in session:
         return redirect(url_for("login"))
 
-    outside = [p for p in points if not p["inside"]]
+    if not csv_headers:
+        return "No CSV uploaded"
+
+    outside = [p for p in points if p["source"] == "csv" and not p["inside"]]
 
     out = io.StringIO()
-    wr = csv.writer(out)
-    wr.writerow(["Index", "Latitude", "Longitude", "Created", "Source"])
+    writer = csv.DictWriter(out, fieldnames=csv_headers)
+    writer.writeheader()
 
-    for i, p in enumerate(outside, start=1):
-        wr.writerow([i, p["lat"], p["lon"], p["created_at"], p["source"]])
+    for p in outside:
+        writer.writerow(csv_rows[p["row_index"]])
 
     return Response(
         out.getvalue(),
         mimetype="text/csv",
-        headers={"Content-Disposition": "attachment; filename=outside_india_points.csv"}
+        headers={
+            "Content-Disposition":
+            "attachment; filename=outside_india_original_format.csv"
+        }
     )
 
 
