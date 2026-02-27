@@ -9,8 +9,9 @@ import random
 import smtplib
 from email.mime.text import MIMEText
 
-import geopandas as gpd      # shapefile পড়ার জন্য
-import requests              # weather + OSM Overpass API এর জন্য
+import geopandas as gpd
+import requests
+from shapely.geometry import Point
 
 from flask import (
     Flask,
@@ -24,8 +25,7 @@ from flask import (
 )
 
 app = Flask(__name__)
-app.secret_key = "change_this_to_a_random_secret_key"  # session এর জন্য
-
+app.secret_key = "change_this_to_a_random_secret_key"
 # ===================== USER STORE (PERSISTENT) =====================
 
 USERS_FILE = "users.json"   # phone/email/password এই ফাইলে সেভ হবে
@@ -126,13 +126,25 @@ points = []
 # shapefile থেকে আসা GeoJSON data (global)
 shapefile_geojson = None
 
+# ===== INDIA ADMIN BOUNDARY LOAD =====
+india_gdf = gpd.read_file(
+    os.path.join(os.path.dirname(__file__),
+                 "india_boundary.zip")
+)
+
+# CRS fix
+india_gdf = india_gdf.to_crs("EPSG:4326")
+
+# single polygon বানাই
+india_polygon = india_gdf.union_all()
 
 # ---------- Helper: India boundary check ----------
 def is_inside_india(lat, lon):
-    """India bounding box: latitude 6 to 38, longitude 68 to 98"""
-    return 6 <= lat <= 38 and 68 <= lon <= 98
-
-
+    try:
+        point = Point(lon, lat)
+        return point.within(india_polygon)
+    except:
+        return False
 # ---------- Helper: validation functions ----------
 def is_valid_phone(phone: str) -> bool:
     # ঠিক ১০ digit, শুধু সংখ্যা
@@ -420,12 +432,28 @@ def index():
                     outside_count = 0
 
                     for row in rdr:
-                        if len(row) < 2:
+
+                        # empty row skip
+                        if not row:
                             continue
+
                         try:
-                            lat = float(row[0])
-                            lon = float(row[1])
-                        except Exception:
+                            cleaned = [c.strip() for c in row if c.strip() != ""]
+
+                            nums = []
+                            for c in cleaned:
+                                try:
+                                    nums.append(float(c))
+                                except:
+                                    pass
+
+                            if len(nums) < 2:
+                                continue
+
+                            lat = nums[-2]
+                            lon = nums[-1]
+
+                        except:
                             continue
 
                         total += 1
@@ -438,6 +466,7 @@ def index():
                             "inside": inside,
                             "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         })
+
                         added += 1
                         if not inside:
                             outside_count += 1
