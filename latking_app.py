@@ -129,13 +129,15 @@ csv_rows = []
 shapefile_geojson = None
 
 # ===== INDIA ADMIN BOUNDARY LOAD =====
-india_gdf = gpd.read_file(
-    os.path.join(os.path.dirname(__file__),
-                 "india_boundary.zip")
-)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+shp_path = os.path.join(BASE_DIR, "india_India_Country_Boundary.shp")
 
-# CRS fix
+if not os.path.exists(shp_path):
+    raise FileNotFoundError(f"Shapefile not found: {shp_path}")
+
+india_gdf = gpd.read_file(shp_path)
 india_gdf = india_gdf.to_crs("EPSG:4326")
+india_polygon = india_gdf.union_all()
 
 # single polygon বানাই
 india_polygon = india_gdf.union_all()
@@ -422,8 +424,10 @@ def index():
         # ------------------ CSV UPLOAD ------------------
         elif form_type == "csv":
             file = request.files.get("csv_file")
+
             if not file or file.filename == "":
                 message = "Please select a CSV file."
+
             else:
                 try:
                     decoded = file.read().decode("utf-8")
@@ -431,7 +435,6 @@ def index():
 
                     csv_headers.clear()
                     csv_rows.clear()
-
                     csv_headers.extend(rdr.fieldnames)
 
                     total = 0
@@ -439,23 +442,9 @@ def index():
                     outside_count = 0
 
                     for row in rdr:
-
                         try:
-                            cleaned_vals = [v for v in row.values() if v not in ("", None)]
-
-                            nums = []
-                            for v in cleaned_vals:
-                                try:
-                                    nums.append(float(v))
-                                except:
-                                    pass
-
-                            if len(nums) < 2:
-                                continue
-
-                            lat = nums[-2]
-                            lon = nums[-1]
-
+                            lat = float(row["Lat"])
+                            lon = float(row["Lon"])
                         except:
                             continue
 
@@ -482,7 +471,6 @@ def index():
                 except Exception as e:
                     print("CSV Error:", e)
                     message = "CSV file read error."
-
         # ------------------ SHAPEFILE UPLOAD (ZIP) ------------------
         elif form_type == "shapefile":
             file = request.files.get("shapefile")
@@ -502,7 +490,10 @@ def index():
 
                     # GeoJSON এ convert
                     shapefile_geojson = json.loads(gdf.to_json())
-                    message = f"Shapefile loaded successfully. Features: {len(gdf)}"
+                    message = f"""
+                    Shapefile loaded successfully. Features: {len(gdf)} <br>
+                    <a href='/download_shapefile_csv'>⬇ Download Attribute CSV</a>
+                    """
 
                 except Exception as e:
                     print("Shapefile Error:", e)
@@ -564,6 +555,39 @@ def download_all_csv():
         headers={"Content-Disposition": "attachment; filename=all_points_india.csv"}
     )
 
+@app.route("/download_shapefile_csv")
+def download_shapefile_csv():
+
+    if "user_phone" not in session:
+        return redirect(url_for("login"))
+
+    global shapefile_geojson
+
+    if not shapefile_geojson:
+        return "No shapefile loaded"
+
+    try:
+        gdf = gpd.GeoDataFrame.from_features(shapefile_geojson["features"])
+
+        # geometry বাদ দিয়ে শুধু attribute
+        if "geometry" in gdf.columns:
+            gdf = gdf.drop(columns="geometry")
+
+        out = io.StringIO()
+        gdf.to_csv(out, index=False)
+
+        return Response(
+            out.getvalue(),
+            mimetype="text/csv",
+            headers={
+                "Content-Disposition":
+                "attachment; filename=shapefile_attributes.csv"
+            }
+        )
+
+    except Exception as e:
+        print("Shapefile CSV error:", e)
+        return "Error creating CSV"
 
 # 👉 শুধু OUTSIDE India পয়েন্টের CSV
 @app.route("/download_wrong_csv")
@@ -792,4 +816,3 @@ def download_buffer_pois():
 if __name__ == "__main__":
     # pip install flask geopandas requests
     app.run(debug=True)
-
