@@ -130,7 +130,7 @@ shapefile_geojson = None
 
 # ===== INDIA ADMIN BOUNDARY LOAD =====
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-shp_path = os.path.join(BASE_DIR, "india_Boundary.zip")
+shp_path = os.path.join(BASE_DIR, "india_boundary.zip")
 
 if not os.path.exists(shp_path):
     raise FileNotFoundError(f"Shapefile not found: {shp_path}")
@@ -816,4 +816,5 @@ def download_buffer_pois():
 if __name__ == "__main__":
     # pip install flask geopandas requests
     app.run(debug=True)
+
 
