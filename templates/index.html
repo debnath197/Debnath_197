@@ -354,6 +354,31 @@
         <div class="little-help">
         </div>
     </div>
+    <div class="section">
+    <h3>Upload KML</h3>
+
+    <form method="post" enctype="multipart/form-data">
+
+        <input type="hidden" name="form_type" value="kml">
+
+        <label>KML File</label>
+
+        <input
+            type="file"
+            name="kml_file"
+            accept=".kml"
+            required>
+
+        <button type="submit">
+            Upload KML
+        </button>
+
+    </form>
+
+    <div class="little-help">
+        Upload a .kml file to display it on the map and convert it to a Shapefile.
+    </div>
+</div>
 
     <div class="section">
         <h3>Export Data</h3>
@@ -361,6 +386,7 @@
             <a href="/download_all_csv">⬇ Download ALL points (inside + outside)</a>
             <a href="/download_wrong_csv">⬇ Download ONLY outside India points</a>
             <a href="/download_shapefile_csv">⬇ Download Shapefile Attribute CSV</a>
+            <a href="/download_kml_shapefile">⬇ Download KML as Shapefile</a>
         </div>
     </div>
 </div>
