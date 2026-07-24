@@ -15,164 +15,231 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
 <style>
 
 body{
+    margin:0;
+    padding:0;
+    font-family:'Segoe UI',sans-serif;
+    background:#eef3fb;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+  @media (max-width:991px){
 
-background:#eef3fb;
-font-family:Arial,Helvetica,sans-serif;
+.login-card{
+    flex-direction:column;
+    width:95%;
+    min-height:auto;
+}
+
+.left,
+.right{
+    width:100%;
+}
+
+.left{
+    padding:35px;
+}
+
+.right{
+    padding:35px;
+}
+
+.left h1{
+    font-size:36px;
+}
+
+.left h4{
+    font-size:22px;
+}
+
+.title{
+    font-size:40px;
+}
+
+.subtitle{
+    font-size:18px;
+}
+
+.features li{
+    font-size:18px;
+}
+
+.map-img{
+    position:static;
+    width:70%;
+    transform:none;
+    display:block;
+    margin:30px auto 0;
+}
 
 }
 
 .login-card{
-
-max-width:950px;
-margin:60px auto;
-background:white;
-border-radius:20px;
-overflow:hidden;
-box-shadow:0 10px 30px rgba(0,0,0,.15);
-
+    width:1100px;
+    min-height:650px;
+    display:flex;
+    border-radius:20px;
+    overflow:hidden;
+    background:#fff;
+    box-shadow:0 20px 50px rgba(0,0,0,.15);
 }
 
 .left{
-
-background:linear-gradient(180deg,#0d6efd,#0047b3);
-color:white;
-padding:50px;
-
-}
-
-.left h1{
-
-font-size:45px;
-font-weight:bold;
-
-}
-
-.left h4{
-
-margin-top:15px;
-
-}
-
-.left img{
-
-width:100%;
-margin-top:50px;
-
+    width:42%;
+    background:linear-gradient(180deg,#0d6efd,#0047b3);
+    color:#fff;
+    padding:50px;
+    position:relative;
 }
 
 .right{
-
-padding:60px;
-
+    width:58%;
+    padding:60px;
+    background:#fff;
 }
 
-.form-control{
-
-height:50px;
-border-radius:10px;
-
+.logo{
+    font-size:50px;
+    margin-bottom:15px;
 }
 
-.btn-primary{
+.left h1{
+    font-size:48px;
+    font-weight:bold;
+}
 
-height:50px;
-border-radius:10px;
-font-size:18px;
+.left h4{
+    margin-top:10px;
+    font-size:30px;
+    font-weight:400;
+}
 
+.line{
+    height:1px;
+    background:rgba(255,255,255,.4);
+    margin:30px 0;
+}
+
+.features{
+    list-style:none;
+    padding:0;
+}
+
+.features li{
+    font-size:24px;
+    margin-bottom:28px;
+}
+
+.map-img{
+    width:85%;
+    position:absolute;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
 }
 
 .title{
-
-font-size:40px;
-font-weight:bold;
-text-align:center;
-
+    text-align:center;
+    font-size:55px;
+    font-weight:bold;
 }
 
 .subtitle{
-
-text-align:center;
-color:gray;
-margin-bottom:30px;
-
+    text-align:center;
+    color:#666;
+    font-size:22px;
+    margin-bottom:40px;
 }
 
-a{
+.form-control{
+    height:58px;
+    border-radius:12px;
+    font-size:18px;
+}
 
-text-decoration:none;
+.btn-primary{
+    height:58px;
+    border-radius:12px;
+    font-size:20px;
+    background:#0d6efd;
+    border:none;
+}
 
+.btn-primary:hover{
+    background:#0057d8;
 }
 
 </style>
-
 </head>
 
 <body>
 
-<div class="container">
+<div class="login-card">
 
-<div class="login-card row g-0">
+<div class="left">
 
-<div class="col-md-5 left">
+<div class="logo">
+<i class="fa-solid fa-earth-asia"></i>
+</div>
 
-<h1><i class="fa-solid fa-earth-asia"></i> GeoPortal</h1>
+<h1>GeoPortal</h1>
 
 <h4>GIS Data Validation System</h4>
 
-<hr>
+<div class="line"></div>
 
-<p style="font-size:20px">
+<ul class="features">
 
-✔ Validate Coordinates<br><br>
+<li>✔ Validate Coordinates</li>
 
-✔ Upload CSV / Shapefile / KML<br><br>
+<li>✔ Upload CSV / Shapefile / KML</li>
 
-✔ Weather API<br><br>
+<li>✔ Weather API</li>
 
-✔ Buffer Analysis<br><br>
+<li>✔ Buffer Analysis</li>
 
-✔ Download Reports
+<li>✔ Download Reports</li>
 
-</p>
+</ul>
 
-<img src="https://cdn-icons-png.flaticon.com/512/854/854878.png">
+<img src="https://cdn-icons-png.flaticon.com/512/854/854878.png"
+class="map-img">
 
 </div>
 
-<div class="col-md-7 right">
+<div class="right">
 
 <div class="title">
-
 Welcome Back
-
 </div>
 
 <div class="subtitle">
-
 Sign in using your Gmail Account
-
 </div>
-
 {% if error %}
 <div class="alert alert-danger">
-{{ error }}
+    {{ error }}
 </div>
 {% endif %}
 
 {% if info %}
 <div class="alert alert-success">
-{{ info }}
+    {{ info }}
 </div>
 {% endif %}
 
 <form method="POST">
 
-<input type="hidden" name="step"
-value="{% if otp_sent %}verify_otp{% else %}send_otp{% endif %}">
+{% if otp_sent %}
+<input type="hidden" name="step" value="verify_otp">
+{% else %}
+<input type="hidden" name="step" value="send_otp">
+{% endif %}
 
-<div class="mb-3">
+<div class="mb-4">
 
-<label class="form-label">
+<label class="form-label fw-bold">
 
 <i class="fa-solid fa-envelope"></i>
 
@@ -181,30 +248,22 @@ Gmail Address
 </label>
 
 <input
-
 type="email"
-
-name="email"
-
 class="form-control"
-
-placeholder="Enter Gmail"
-
-value="{{email}}"
-
+name="email"
+placeholder="Enter your Gmail Address"
+value="{{ email }}"
 required
-
 {% if otp_sent %}readonly{% endif %}
-
 >
 
 </div>
 
 {% if otp_sent %}
 
-<div class="mb-3">
+<div class="mb-4">
 
-<label class="form-label">
+<label class="form-label fw-bold">
 
 <i class="fa-solid fa-lock"></i>
 
@@ -213,17 +272,11 @@ OTP
 </label>
 
 <input
-
 type="text"
-
-name="otp"
-
 class="form-control"
-
-placeholder="Enter 6 Digit OTP"
-
+name="otp"
 maxlength="6"
-
+placeholder="Enter 6 Digit OTP"
 required>
 
 </div>
@@ -232,7 +285,7 @@ required>
 
 <i class="fa-solid fa-right-to-bracket"></i>
 
-Login
+Verify & Login
 
 </button>
 
@@ -250,7 +303,7 @@ Send OTP
 
 <div class="text-center mt-4">
 
-<a href="/forgot_password">
+<a href="{{ url_for('forgot_password') }}">
 
 Forgot Password?
 
@@ -258,19 +311,56 @@ Forgot Password?
 
 </div>
 
-<div class="text-center mt-2">
+<div class="text-center mt-3">
 
 Don't have an account?
 
-<a href="/signup">
+<a href="{{ url_for('signup') }}">
 
-Sign Up
+<b>Sign Up</b>
 
 </a>
 
 </div>
 
 </form>
+<div class="text-center mt-4">
+
+<hr>
+
+<p class="text-muted">
+
+Secure OTP Authentication
+
+</p>
+
+<div class="d-flex justify-content-center gap-3 mt-3">
+
+<span class="badge bg-primary">
+
+GIS
+
+</span>
+
+<span class="badge bg-success">
+
+CSV
+
+</span>
+
+<span class="badge bg-info">
+
+KML
+
+</span>
+
+<span class="badge bg-dark">
+
+SHP
+
+</span>
+
+</div>
 
 </div>
 
