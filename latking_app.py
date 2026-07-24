@@ -3,6 +3,8 @@ import re
 import csv
 import io
 import json
+import zipfile
+
 from datetime import datetime, timedelta
 import tempfile
 import random
@@ -22,6 +24,7 @@ from flask import (
     url_for,
     session,
     jsonify,
+    send_file,
 )
 
 app = Flask(__name__)
@@ -471,37 +474,120 @@ def index():
                 except Exception as e:
                     print("CSV Error:", e)
                     message = "CSV file read error."
-        # ------------------ SHAPEFILE UPLOAD (ZIP) ------------------
+               # ------------------ SHAPEFILE UPLOAD (ZIP) ------------------
         elif form_type == "shapefile":
             file = request.files.get("shapefile")
+
             if not file or file.filename == "":
                 message = "Please select a shapefile ZIP."
+
             else:
                 tmp_path = None
+
                 try:
-                    # shapefile ZIP টেম্প ফাইলে সেভ করি
                     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".zip")
                     tmp_path = tmp.name
                     file.save(tmp_path)
                     tmp.close()
 
-                    # GeoPandas দিয়ে shapefile পড়ি
                     gdf = gpd.read_file(tmp_path)
 
-                    # GeoJSON এ convert
                     shapefile_geojson = json.loads(gdf.to_json())
+
                     message = f"""
                     Shapefile loaded successfully. Features: {len(gdf)} <br>
-                    <a href='/download_shapefile_csv'>⬇ Download Attribute CSV</a>
+                    <a href='/download_shapefile_csv'>
+                    ⬇ Download Attribute CSV
+                    </a>
                     """
 
                 except Exception as e:
                     print("Shapefile Error:", e)
                     shapefile_geojson = None
-                    message = "Error reading shapefile. Make sure it's a valid ZIP."
+                    message = "Error reading shapefile."
+
                 finally:
                     if tmp_path and os.path.exists(tmp_path):
                         os.remove(tmp_path)
+
+        # ------------------ KML UPLOAD ------------------
+        elif form_type == "kml":
+
+            file = request.files.get("kml_file")
+
+            if not file or file.filename == "":
+                message = "Please select a KML file."
+
+            else:
+
+                tmp_dir = tempfile.mkdtemp()
+
+                try:
+
+                    import fiona
+                    fiona.drvsupport.supported_drivers["KML"] = "rw"
+
+                    kml_path = os.path.join(tmp_dir, file.filename)
+                    file.save(kml_path)
+
+                    gdf = gpd.read_file(kml_path, driver="KML")
+
+                    if gdf.empty:
+                        message = "No features found."
+
+                    else:
+
+                        # Show on Map
+                        shapefile_geojson = json.loads(gdf.to_json())
+
+                        # Convert to Shapefile
+                        shp_folder = os.path.join(tmp_dir, "shp")
+                        os.makedirs(shp_folder, exist_ok=True)
+
+                        shp_path = os.path.join(
+                            shp_folder,
+                            "KML_Output.shp"
+                        )
+
+                        gdf.to_file(
+                            shp_path,
+                            driver="ESRI Shapefile",
+                            encoding="utf-8"
+                        )
+
+                        zip_path = os.path.join(
+                            tmp_dir,
+                            "KML_Output.zip"
+                        )
+
+                        with zipfile.ZipFile(
+                            zip_path,
+                            "w",
+                            zipfile.ZIP_DEFLATED
+                        ) as zipf:
+
+                            for f in os.listdir(shp_folder):
+
+                                zipf.write(
+                                    os.path.join(shp_folder, f),
+                                    arcname=f
+                                )
+
+                        session["kml_zip"] = zip_path
+
+                        message = f"""
+                        KML uploaded successfully.<br>
+                        Features : {len(gdf)}<br><br>
+
+                        <a href="/download_kml_shapefile">
+                        ⬇ Download Shapefile
+                        </a>
+                        """
+
+                except Exception as e:
+
+                    print("KML ERROR:", e)
+                    message = str(e)
 
     # outside India points
     outside_points = [p for p in points if not p["inside"]]
@@ -527,7 +613,22 @@ def index():
         user_phone=phone,
         masked_phone=masked_phone
     )
+@app.route("/download_kml_shapefile")
+def download_kml_shapefile():
 
+    if "user_phone" not in session:
+        return redirect(url_for("login"))
+
+    zip_path = session.get("kml_zip")
+
+    if not zip_path or not os.path.exists(zip_path):
+        return "No converted shapefile found."
+
+    return send_file(
+        zip_path,
+        as_attachment=True,
+        download_name="KML_to_Shapefile.zip"
+    )
 
 # 👉 সব পয়েন্টের (inside + outside) CSV
 @app.route("/download_all_csv")
